@@ -1,0 +1,36 @@
+### Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+### IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+### VS Code
+.vscode/
+
+### Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+### Environment — NEVER commit sensitive credentials
+.env
+application-local.yml
+application-prod.yml
+
+### OS
+.DS_Store
+Thumbs.db
+
+### Logs
+*.log
+logs/
