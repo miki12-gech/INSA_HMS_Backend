@@ -2,9 +2,9 @@ spring:
   application:
     name: hms-backend
   datasource:
-    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/insa_hospital}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:12345}
+    url: jdbc:postgresql://localhost:5432/insa_hospital
+    username: postgres
+    password: 12345
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
