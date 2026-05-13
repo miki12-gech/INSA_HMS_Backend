@@ -2,19 +2,18 @@ spring:
   application:
     name: hms-backend
   datasource:
-    url: jdbc:postgresql://localhost:5432/insa_hospital
-    username: postgres
-    password: 12345
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/insa_hospital}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:12345}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: none 
+      ddl-auto: update
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-    show-sql: true
+    show-sql: ${SHOW_SQL:true}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
         globally_quoted_identifiers: false
 # ─────────────────────────────────────────────────────────────
 # SERVER
@@ -31,15 +30,15 @@ server:
 # ─────────────────────────────────────────────────────────────
 app:
   jwt:
-    secret: aG9zcGl0YWwtbWFuYWdlbWVudC1zeXN0ZW0tc2VjcmV0LWtleS1taWdyYXRpb24tcHJvamVjdC1tdXN0LWJlLWxvbmc=
+    secret: ${JWT_SECRET:aG9zcGl0YWwtbWFuYWdlbWVudC1zeXN0ZW0tc2VjcmV0LWtleS1taWdyYXRpb24tcHJvamVjdC1tdXN0LWJlLWxvbmc=}
     expiration-ms: 86400000
     refresh-expiration-ms: 604800000
 # ─────────────────────────────────────────────────────────────
-# LOGGING — enable SQL parameter binding values
+# LOGGING
 # ─────────────────────────────────────────────────────────────
 logging:
   level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    org.springframework.security: DEBUG
-    com.insa.hospital: DEBUG
+    org.hibernate.SQL: ${LOG_LEVEL_SQL:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${LOG_LEVEL_BINDER:TRACE}
+    org.springframework.security: ${LOG_LEVEL_SECURITY:DEBUG}
+    com.insa.hospital: ${LOG_LEVEL_APP:DEBUG}
