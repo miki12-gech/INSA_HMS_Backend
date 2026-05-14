@@ -41,9 +41,11 @@ public class DatabaseConfig {
                 } else {
                     URI uri = new URI(cleanUrl);
 
-                    String jdbcUrl = "jdbc:postgresql://" + uri.getHost()
-                            + ":" + uri.getPort()
-                            + uri.getPath();
+                    String jdbcUrl = "jdbc:postgresql://" + uri.getHost();
+                    if (uri.getPort() != -1) {
+                        jdbcUrl += ":" + uri.getPort();
+                    }
+                    jdbcUrl += uri.getPath();
 
                     // Preserve query parameters (e.g. ?sslmode=require)
                     if (uri.getQuery() != null) {
