@@ -18,6 +18,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class HospitalApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(HospitalApplication.class, args);
+        try {
+            SpringApplication.run(HospitalApplication.class, args);
+        } catch (Exception e) {
+            System.err.println("CRITICAL FAILURE DURING STARTUP:");
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 }
