@@ -1,59 +1,78 @@
 package com.insa.hospital.config;
 
-import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
-import org.springframework.boot.context.properties.ConfigurationProperties;
+import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
 
+import javax.sql.DataSource;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
- * Automatically converts Render / Heroku style DATABASE_URL
- * (postgres://user:pass@host:port/dbname) into a JDBC-compatible
- * DataSource so Spring Boot + Hibernate can connect without issues.
+ * Directly creates the DataSource bean, handling Render's DATABASE_URL format
+ * (postgres://user:pass@host:port/dbname) automatically.
+ *
+ * When DATABASE_URL is present → parse and use it (Render / production).
+ * When DATABASE_URL is absent  → fall back to localhost defaults (local dev).
  */
 @Configuration
 public class DatabaseConfig {
 
     @Bean
     @Primary
-    @ConfigurationProperties("spring.datasource")
-    public DataSourceProperties dataSourceProperties() {
-        DataSourceProperties props = new DataSourceProperties();
-
+    public DataSource dataSource() {
         String databaseUrl = System.getenv("DATABASE_URL");
+
+        HikariDataSource ds = new HikariDataSource();
+        ds.setDriverClassName("org.postgresql.Driver");
+
         if (databaseUrl != null && !databaseUrl.isEmpty()) {
             try {
-                // Render gives: postgres://user:pass@host:port/dbname
-                // We need:      jdbc:postgresql://host:port/dbname
-                URI uri = new URI(databaseUrl.replace("postgres://", "postgresql://"));
-
-                String jdbcUrl = "jdbc:postgresql://" + uri.getHost()
-                        + ":" + uri.getPort()
-                        + uri.getPath();
-
-                if (uri.getQuery() != null) {
-                    jdbcUrl += "?" + uri.getQuery();
+                // Render gives:  postgres://user:pass@host:port/dbname
+                // JDBC needs:    jdbc:postgresql://host:port/dbname
+                String cleanUrl = databaseUrl;
+                if (cleanUrl.startsWith("postgres://")) {
+                    cleanUrl = cleanUrl.replace("postgres://", "postgresql://");
                 }
+                if (!cleanUrl.startsWith("postgresql://")) {
+                    // already jdbc: format or something else
+                    ds.setJdbcUrl(cleanUrl.startsWith("jdbc:") ? cleanUrl : "jdbc:" + cleanUrl);
+                } else {
+                    URI uri = new URI(cleanUrl);
 
-                props.setUrl(jdbcUrl);
+                    String jdbcUrl = "jdbc:postgresql://" + uri.getHost()
+                            + ":" + uri.getPort()
+                            + uri.getPath();
 
-                if (uri.getUserInfo() != null) {
-                    String[] userInfo = uri.getUserInfo().split(":", 2);
-                    props.setUsername(userInfo[0]);
-                    if (userInfo.length > 1) {
-                        props.setPassword(userInfo[1]);
+                    // Preserve query parameters (e.g. ?sslmode=require)
+                    if (uri.getQuery() != null) {
+                        jdbcUrl += "?" + uri.getQuery();
+                    }
+
+                    ds.setJdbcUrl(jdbcUrl);
+
+                    if (uri.getUserInfo() != null) {
+                        String[] userInfo = uri.getUserInfo().split(":", 2);
+                        ds.setUsername(userInfo[0]);
+                        if (userInfo.length > 1) {
+                            ds.setPassword(userInfo[1]);
+                        }
                     }
                 }
 
-                props.setDriverClassName("org.postgresql.Driver");
+                System.out.println("==> DatabaseConfig: using DATABASE_URL (production)");
             } catch (URISyntaxException e) {
-                throw new RuntimeException("Invalid DATABASE_URL: " + databaseUrl, e);
+                throw new RuntimeException("Invalid DATABASE_URL format: " + databaseUrl, e);
             }
+        } else {
+            // Local development defaults
+            ds.setJdbcUrl("jdbc:postgresql://localhost:5432/insa_hospital");
+            ds.setUsername("postgres");
+            ds.setPassword("12345");
+            System.out.println("==> DatabaseConfig: using localhost defaults (development)");
         }
 
-        return props;
+        return ds;
     }
 }
